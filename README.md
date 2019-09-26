@@ -47,6 +47,6 @@ clean:
 	rm -f $(OBJS) $(BINNAME)
   ```
   
-Compile with ```bash make ``` and run with ```bash xeneth-demo ```
+Compile with ```make ``` and run with ```xeneth-demo ```
 
 In the combo box, select the connected camera and go to **Image -> Start Caputre** and **Filters -> Auto Gain** to start image acquisition and improve threshold settings.
