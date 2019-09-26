@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>thermalcameraros</name>
+  <name>thermal_camera</name>
   <version>0.0.0</version>
   <description>The thermal camera package</description>
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
@@ -16,37 +16,32 @@
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>laser_geometry</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
-  <build_depend>pcl_ros</build_depend>
   <build_depend>OpenCV</build_depend>
   <build_depend>cv_bridge</build_depend>
-  <build_depend>grid_map_ros</build_depend>
+  <build_depend>xeneth</build_depend>
 
-  <build_export_depend>grid_map_ros</build_export_depend>
   <build_export_depend>cv_bridge</build_export_depend>
   <build_export_depend>OpenCV</build_export_depend>
-  <build_export_depend>pcl_ros</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
-  <build_export_depend>laser_geometry</build_export_depend>
   <build_export_depend>tf</build_export_depend>
   <build_export_depend>sensor_msgs</build_export_depend>
+  <build_export_depend>xeneth</build_export_depend>
 
-  <exec_depend>pcl_ros</exec_depend>
+
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-  <exec_depend>laser_geometry</exec_depend>
   <exec_depend>tf</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>dynamic_reconfigure</exec_depend>
   <exec_depend>OpenCV</exec_depend>
   <exec_depend>cv_bridge</exec_depend>
-  <exec_depend>grid_map_ros</exec_depend>
+  <exec_depend>xeneth</exec_depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
