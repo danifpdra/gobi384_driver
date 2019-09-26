@@ -4,11 +4,11 @@ ROS package to work with a thermal csamera Xenics Gobi 384 on Linux
 
 # Installation of Camera Drivers on Linux
 
-First download and install the Xenics Xeneth package: http://support.xenics.com/Support/Linux_SDK_26.zip
+First download and install the Xenics Xeneth package: http://support.xenics.com/Support/Linux_SDK_26.zip.
 
-To be able to compile and use these libraries, an older version of libpng is required. Please install the correct version of the library by downloading the package here: https://packages.ubuntu.com/xenial/amd64/libpng12-0/download (64bits)
+To be able to compile and use these libraries, an older version of libpng is required. Please install the correct version of the library by downloading the package here: https://packages.ubuntu.com/xenial/amd64/libpng12-0/download (64bits).
 
-To test the compilation, run
+To test the compilation, run:
 
 ```bash
 cd /usr/share/xeneth/Sample/LinuxDemo
@@ -47,6 +47,6 @@ clean:
 	rm -f $(OBJS) $(BINNAME)
   ```
   
-Compile with ```make ``` and run with ```xeneth-demo ```
+Compile with ```make ``` and run with ```xeneth-demo ```.
 
 In the combo box, select the connected camera and go to **Image -> Start Caputre** and **Filters -> Auto Gain** to start image acquisition and improve threshold settings.
