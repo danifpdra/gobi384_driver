@@ -169,6 +169,7 @@ add_executable(thermal_camera src/thermal.cpp)
    ${catkin_LIBRARIES}
    ${Eigen_LIBRARIES}
    ${OpenCV_LIBS}
+   -lxeneth
 )
 
 
