@@ -21,6 +21,7 @@
 
 //---------Xeneth Camera ------
 #include "XCamera.h"
+#include "XFilters.h"
 
 class ThermalCam {
 public:
@@ -40,6 +41,8 @@ private:
   ros::NodeHandle nh;
 
   // declare variables
+  XCamera *cam;
+  XDeviceInformation *devices;
   cv::Mat thermal_img;
   ros::Publisher img_pub;
   image_transport::ImageTransport it;
@@ -48,6 +51,11 @@ private:
   ErrCode errorCode = I_OK;
   dword frameSize = 0; // The size in bytes of the raw image.
   std::vector<word> framebuffer;
+  const char *packname;
+  FilterID fltThermography = 0; // Handle to the thermography filter.
+  double *tempLUT = 0;          // Temperature lookup table (ADU to temperature)
+  const char *newint = "64";
+  FilterID histoFlt = 0;
 
   // declare functions here
   void getImage();
@@ -64,6 +72,11 @@ void ThermalCam::loop_function() {
   img_pub.publish(msg_thermal);
 }
 
+/**
+ * @brief Function to detect the connected devices
+ *
+ * @return XDeviceInformation*
+ */
 XDeviceInformation *ThermalCam::DeviceDescovery() {
   unsigned int deviceCount = 0;
 
@@ -79,23 +92,7 @@ XDeviceInformation *ThermalCam::DeviceDescovery() {
     return NULL;
   }
 
-  /*  At this point we know how much devices are present in the environment.
-   *  Now allocate the XDeviceInformation array to accommodate all the
-   * discovered devices using the device count to determine the size needed.
-   * Once allocated we call the enumerate devices method again but now instead
-   * of passing null as the initial argument use the new allocated buffer. For
-   * the flags argument we no longer use a protocol enable flag but make use of
-   * the XEF_UseCached flag. On discovery devices are cached internally and as
-   * such we are able to retrieve the device information structures instantly
-   * when calling XCD_EnumerateDevices for a second time. Note that it is not
-   * required to first check device count, allocate structure and retrieve
-   * cached devices. A user could allocate one or more device structure and
-   * immediately pass this with the initial call to XCD_EnumerateDevices.
-   *  XCD_EnumerateDevices will not exceed the supplied deviceCount and when
-   * less devices were discovered than the initial deviceCount
-   *  this argument is updated with the new count. */
-
-  XDeviceInformation *devices = new XDeviceInformation[deviceCount];
+  devices = new XDeviceInformation[deviceCount];
   if ((errorCode = XCD_EnumerateDevices(devices, &deviceCount,
                                         XEF_UseCached)) != I_OK) {
     printf("Error while retrieving the cached device information structures. "
@@ -144,29 +141,53 @@ XCamera *ThermalCam::connectCam() {
 }
 
 void ThermalCam::startCap() {
-  XCamera *cam = connectCam();
+  cam = connectCam();
   XDeviceInformation *dev = DeviceDescovery();
-  ErrCode errorCode =
-      0; // Used to store returned errorCodes from the SDK functions.
+
+  packname =
+      "/home/daniela/catkin_ws/src/thermal_camera/config/calibration_5449.xca";
   handle = XC_OpenCamera(dev->url);
 
   header.frame_id = "map";
   header.stamp = ros::Time(0);
-  const char *newint = "64";
+  newint = "64";
 
   XC_SetPropertyValue(handle, "IntegrationTime", newint, "");
 
-  printf("Start capturing.\n");
-  if ((errorCode = XC_StartCapture(handle)) != I_OK) {
-    printf("Could not start capturing, errorCode: %lu\n", errorCode);
-  } else {
-    printf("Initialization failed\n");
+  if (I_OK ==
+      XC_LoadCalibration(handle, packname, XLC_StartSoftwareCorrection)) {
+    fltThermography = XC_FLT_Queue(handle, "Thermography", "celsius");
+    histoFlt = XC_FLT_Queue(handle, "AutoGain", "");
+
+    if (fltThermography > 0) {
+      // When a TrueThermal calibration pack is loaded, it is allowed to change
+      // the integration time. XC_SetPropertyValueL(handle,"IntegrationTime",
+      // 100, "");
+
+      // Build the look-up table and ..
+      dword mv = XC_GetMaxValue(handle);
+      tempLUT = new double[mv + 1];
+
+      for (dword x = 0; x < mv + 1; x++) {
+        XC_FLT_ADUToTemperature(handle, fltThermography, x, &tempLUT[x]);
+      }
+
+      printf("Start capturing.\n");
+      if ((errorCode = XC_StartCapture(handle)) != I_OK) {
+        printf("Could not start capturing, errorCode: %lu\n", errorCode);
+      } else {
+        printf("Initialization failed\n");
+      }
+    }
   }
 }
 
 void ThermalCam::stopCap() {
   XC_StopCapture(handle);
   XC_CloseCamera(handle);
+
+  delete[] tempLUT;
+
   std::cout << "Camera closed" << std::endl;
 }
 
@@ -192,18 +213,14 @@ void ThermalCam::getImage() {
     // ... start capturing
     if (XC_IsCapturing(handle)) // When the camera is capturing ...
     {
-
-      // for (;;) {
-
       // Determine native framesize.
       frameSize = XC_GetFrameSize(handle);
 
       // Initialize the 16-bit buffer.
-      // frameBuffer = new word[frameSize / 2];
       framebuffer.resize(frameSize / 2);
 
       // ... grab a frame from the camera.
-      printf("Grabbing a frame.\n");
+      // printf("Grabbing a frame.\n");
       if ((errorCode = XC_GetFrame(handle, FT_16_BPP_GRAY, XGF_Blocking,
                                    framebuffer.data(), frameSize)) != I_OK) {
         printf("Problem while fetching frame, errorCode %lu", errorCode);
@@ -211,14 +228,11 @@ void ThermalCam::getImage() {
 
       int h = XC_GetHeight(handle);
       int w = XC_GetWidth(handle);
-      // Mat(int rows, int cols, int type, void *data, size_t step =
-      // AUTO_STEP);
-      thermal_img = cv::Mat(h, w,CV_16UC1 , framebuffer.data());
 
-      // std::cout << thermal_img<< std::endl;
+      thermal_img = cv::Mat(h, w, CV_16UC1, framebuffer.data());
+
       msg_thermal =
           cv_bridge::CvImage{header, "mono16", thermal_img}.toImageMsg();
-      // }
     }
   }
 }
