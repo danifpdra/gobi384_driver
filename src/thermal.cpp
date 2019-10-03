@@ -23,6 +23,10 @@
 #include "XCamera.h"
 #include "XFilters.h"
 
+
+using namespace std;
+using namespace cv;
+
 class ThermalCam {
 public:
   // publicadores
@@ -42,8 +46,8 @@ private:
 
   // declare variables
   XCamera *cam;
-  XDeviceInformation *devices;
-  cv::Mat thermal_img;
+  XDeviceInformation *devices, *dev;
+  cv::Mat thermal_img, color_img;
   ros::Publisher img_pub;
   image_transport::ImageTransport it;
   std_msgs::Header header;
@@ -62,12 +66,19 @@ private:
   XDeviceInformation *DeviceDescovery();
 };
 
+/**
+ * @brief Construct a new Thermal Cam:: Thermal Cam object
+ *
+ */
 ThermalCam::ThermalCam() : it(nh) {
   img_pub = nh.advertise<sensor_msgs::Image>("thermal_img", 10);
 }
 
+/**
+ * @brief Loop function
+ *
+ */
 void ThermalCam::loop_function() {
-  // DeviceDescovery();
   getImage();
   img_pub.publish(msg_thermal);
 }
@@ -80,23 +91,22 @@ void ThermalCam::loop_function() {
 XDeviceInformation *ThermalCam::DeviceDescovery() {
   unsigned int deviceCount = 0;
 
-  if ((errorCode = XCD_EnumerateDevices(NULL, &deviceCount, XEF_EnableAll)) !=
-      I_OK) {
+  errorCode = XCD_EnumerateDevices(NULL, &deviceCount, XEF_EnableAll);
+  if (errorCode != I_OK) {
     printf("An error occurred while enumerating the devices. errorCode: %lu\n",
            errorCode);
     return NULL;
-  }
-
-  if (deviceCount == 0) {
+  } else if (deviceCount == 0) {
     printf("Enumeration was a success but no devices were found!\n");
     return NULL;
   }
 
   devices = new XDeviceInformation[deviceCount];
-  if ((errorCode = XCD_EnumerateDevices(devices, &deviceCount,
-                                        XEF_UseCached)) != I_OK) {
+  errorCode = XCD_EnumerateDevices(devices, &deviceCount, XEF_UseCached);
+
+  if (errorCode != I_OK) {
     printf("Error while retrieving the cached device information structures. "
-           "errorCode: %lu\n",
+           "ErrorCode: %lu\n",
            errorCode);
     delete[] devices;
     return NULL;
@@ -104,7 +114,6 @@ XDeviceInformation *ThermalCam::DeviceDescovery() {
 
   /*  All discovered devices are now available in our local array and we are now
    * able to iterate the list and output each item in the array */
-
   for (unsigned int i = 0; i < deviceCount; i++) {
     XDeviceInformation *dev = &devices[i];
     printf("device[%u] %s @ %s (%s) \n", i, dev->name, dev->address,
@@ -117,15 +126,19 @@ XDeviceInformation *ThermalCam::DeviceDescovery() {
                ? "Available"
                : dev->state == XDS_Busy ? "Busy" : "Unreachable");
   }
-  XDeviceInformation *dev = &devices[0];
+  dev = &devices[0];
   return dev;
 }
 
+/**
+ * @brief Function to connect to the camera
+ *
+ * @return XCamera*
+ */
 XCamera *ThermalCam::connectCam() {
 
   XDeviceInformation *dev = DeviceDescovery();
-
-  XCamera *cam = XCamera::Create(dev->url, NULL, NULL);
+  cam = XCamera::Create(dev->url, NULL, NULL);
 
   if (cam == NULL) {
     printf("Unable to create API instance");
@@ -135,14 +148,17 @@ XCamera *ThermalCam::connectCam() {
     delete cam;
     return NULL;
   } else {
-    printf("Connected to device");
+    printf("Connected to device\n");
     return cam;
   }
 }
 
+/**
+ * @brief Function to start capturing and activate filters
+ *
+ */
 void ThermalCam::startCap() {
   cam = connectCam();
-  XDeviceInformation *dev = DeviceDescovery();
 
   packname =
       "/home/daniela/catkin_ws/src/thermal_camera/config/calibration_5449.xca";
@@ -154,16 +170,12 @@ void ThermalCam::startCap() {
 
   XC_SetPropertyValue(handle, "IntegrationTime", newint, "");
 
-  if (I_OK ==
-      XC_LoadCalibration(handle, packname, XLC_StartSoftwareCorrection)) {
+  errorCode = XC_LoadCalibration(handle, packname, XLC_StartSoftwareCorrection);
+  if (I_OK == errorCode) {
     fltThermography = XC_FLT_Queue(handle, "Thermography", "celsius");
     histoFlt = XC_FLT_Queue(handle, "AutoGain", "");
 
     if (fltThermography > 0) {
-      // When a TrueThermal calibration pack is loaded, it is allowed to change
-      // the integration time. XC_SetPropertyValueL(handle,"IntegrationTime",
-      // 100, "");
-
       // Build the look-up table and ..
       dword mv = XC_GetMaxValue(handle);
       tempLUT = new double[mv + 1];
@@ -173,39 +185,21 @@ void ThermalCam::startCap() {
       }
 
       printf("Start capturing.\n");
-      if ((errorCode = XC_StartCapture(handle)) != I_OK) {
+      errorCode = XC_StartCapture(handle);
+
+      if (errorCode != I_OK) {
         printf("Could not start capturing, errorCode: %lu\n", errorCode);
       } else {
-        printf("Initialization failed\n");
+        printf("Initialization completed!\n");
       }
     }
   }
 }
 
-void ThermalCam::stopCap() {
-  XC_StopCapture(handle);
-  XC_CloseCamera(handle);
-
-  delete[] tempLUT;
-
-  std::cout << "Camera closed" << std::endl;
-}
-
-// AUTOGAIN
-
-// void XMainFrame::OnAutoGain(wxCommandEvent &evt)
-// {
-//     static FilterID histoFlt = 0;
-//     if(evt.IsChecked())
-//     {
-//         histoFlt = QueueFilter(m_pCam, "AutoGain", "");
-//     }
-//     else
-//     {
-//         m_pCam->RemImageFilter(histoFlt);
-//     }
-// }
-
+/**
+ * @brief Function to get frames at each loop
+ *
+ */
 void ThermalCam::getImage() {
 
   // When the connection is initialised, ...
@@ -221,20 +215,71 @@ void ThermalCam::getImage() {
 
       // ... grab a frame from the camera.
       // printf("Grabbing a frame.\n");
-      if ((errorCode = XC_GetFrame(handle, FT_16_BPP_GRAY, XGF_Blocking,
-                                   framebuffer.data(), frameSize)) != I_OK) {
+      errorCode = XC_GetFrame(handle, FT_16_BPP_GRAY, XGF_Blocking,
+                              framebuffer.data(), frameSize);
+      if (errorCode != I_OK) {
         printf("Problem while fetching frame, errorCode %lu", errorCode);
       }
 
       int h = XC_GetHeight(handle);
       int w = XC_GetWidth(handle);
 
-      thermal_img = cv::Mat(h, w, CV_16UC1, framebuffer.data());
+      cv::Mat Blue, Red;
+      Blue = cv::Mat::zeros(h,w, CV_16UC1);
+      Red = cv::Mat(h, w, CV_16UC1, CvScalar(255));
 
-      msg_thermal =
-          cv_bridge::CvImage{header, "mono16", thermal_img}.toImageMsg();
+      // color_img = cv::Mat(h, w, CV_16UC1, CvScalar(255));
+
+      thermal_img =
+          cv::Mat(h, w, CV_16UC1, framebuffer.data()); /*convert to OpenCV*/
+
+      // std::vector<Mat> channels;
+      // channels.push_back(Red);
+      // channels.push_back(thermal_img);
+      // channels.push_back(Blue);
+
+      // cv::merge(channels, color_img);
+
+      // color_img.convertTo(color_img, CV_8UC3);
+
+      cv::Mat color_img;
+
+      thermal_img /= 256;
+
+      thermal_img.convertTo(thermal_img, CV_8U);
+
+      // color_img /= std::numeric_limits<word>::max();
+
+      cv::applyColorMap(thermal_img, color_img, cv::COLORMAP_AUTUMN);
+      // std::cout << color_img << std::endl;
+
+
+      // color_img = cv::Mat(h, w, CV_16UC3, framebuffer.data());
+
+      // std::cout << thermal_img << std::endl;
+
+      // cv::cvtColor(thermal_img, color_img, CV_GRAY2RGB);
+
+      msg_thermal = cv_bridge::CvImage{header, "bgr8", color_img}
+                        .toImageMsg(); /*convert to ROS msg*/
+
+                      // imshow("Display window", color_img);
     }
   }
+}
+
+/**
+ * @brief Function to stop capturing and close camera handle
+ *
+ */
+void ThermalCam::stopCap() {
+  XC_StopCapture(handle);
+  XC_CloseCamera(handle);
+
+  delete[] tempLUT;
+  delete cam;
+
+  std::cout << "Camera closed" << std::endl;
 }
 
 int main(int argc, char **argv) {
