@@ -50,3 +50,15 @@ clean:
 Compile with ```make``` and run with ```xeneth-demo```.
 
 In the combo box, select the connected camera and go to **Image -> Start Caputre** and **Filters -> Auto Gain** to start image acquisition and improve threshold settings.
+
+
+# Installation of ROS drivers
+
+Download the code with:
+
+```bash
+cd catkin_ws/src
+git clone https://github.com/danifpdra/thermal_camera
+```
+
+Connect the camera to your computer through an Ethernet connection. Compile and run. You should be able to visualize the camera image in Rviz!
