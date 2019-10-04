@@ -22,6 +22,7 @@
   <build_depend>OpenCV</build_depend>
   <build_depend>cv_bridge</build_depend>
   <build_depend>xeneth</build_depend>
+  <build_depend>rospack</build_depend>
 
   <build_export_depend>cv_bridge</build_export_depend>
   <build_export_depend>OpenCV</build_export_depend>
@@ -31,6 +32,7 @@
   <build_export_depend>tf</build_export_depend>
   <build_export_depend>sensor_msgs</build_export_depend>
   <build_export_depend>xeneth</build_export_depend>
+  <build_export_depend>rospack</build_export_depend>
 
 
   <exec_depend>roscpp</exec_depend>
@@ -42,6 +44,7 @@
   <exec_depend>OpenCV</exec_depend>
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>xeneth</exec_depend>
+  <exec_depend>rospack</exec_depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

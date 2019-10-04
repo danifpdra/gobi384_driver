@@ -2,6 +2,7 @@
 
 #include <ros/console.h>
 #include <ros/ros.h>
+#include <rospack/rospack.h>
 //-----------------
 #include "stdio.h"
 #include <algorithm> // std::max
@@ -18,6 +19,8 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
+
+#include <ros/package.h>
 
 //---------Xeneth Camera ------
 #include "XCamera.h"
@@ -54,7 +57,7 @@ private:
   ErrCode errorCode = I_OK;
   dword frameSize = 0; // The size in bytes of the raw image.
   std::vector<word> framebuffer;
-  const char *packname;
+  std::string packname;
   FilterID fltThermography = 0; // Handle to the thermography filter.
   double *tempLUT = 0;          // Temperature lookup table (ADU to temperature)
   const char *newint = "64";
@@ -159,8 +162,10 @@ XCamera *ThermalCam::connectCam() {
 void ThermalCam::startCap() {
   cam = connectCam();
 
-  packname =
-      "/home/daniela/catkin_ws/src/thermal_camera/config/calibration_5449.xca";
+  std::string path = ros::package::getPath("thermal_camera");
+  std::cout << "found package at " << path << std::endl;
+
+  packname = path + std::string("/config/calibration_5449.xca");
   handle = XC_OpenCamera(dev->url);
 
   header.frame_id = "map";
@@ -169,7 +174,8 @@ void ThermalCam::startCap() {
 
   XC_SetPropertyValue(handle, "IntegrationTime", newint, "");
 
-  errorCode = XC_LoadCalibration(handle, packname, XLC_StartSoftwareCorrection);
+  errorCode =
+      XC_LoadCalibration(handle, packname.c_str(), XLC_StartSoftwareCorrection);
   if (I_OK == errorCode) {
     fltThermography = XC_FLT_Queue(handle, "Thermography", "celsius");
     histoFlt = XC_FLT_Queue(handle, "AutoGain", "");
@@ -183,6 +189,7 @@ void ThermalCam::startCap() {
         XC_FLT_ADUToTemperature(handle, fltThermography, x, &tempLUT[x]);
       }
 
+      // std::cout << tempLUT << std::endl;
       printf("Start capturing.\n");
       errorCode = XC_StartCapture(handle);
 
@@ -249,7 +256,7 @@ void ThermalCam::getImage() {
       cv::applyColorMap(thermal_img, color_img, cv::COLORMAP_AUTUMN);
 
       msg_thermal = cv_bridge::CvImage{header, "bgr8", color_img}
-                        .toImageMsg(); /*convert to ROS msg*/
+                        .toImageMsg(); /*convert image to ROS msg*/
     }
   }
 }
