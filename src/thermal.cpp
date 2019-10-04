@@ -143,14 +143,14 @@ XCamera *ThermalCam::connectCam() {
   cam = XCamera::Create(dev->url, NULL, NULL);
 
   if (cam == NULL) {
-    printf("Unable to create API instance");
+    printf("Unable to create API instance! \n");
     return NULL;
   } else if (cam->IsInitialised() == false) {
-    printf("Unable to establish a connection");
+    printf("Unable to establish a connection! \n");
     delete cam;
     return NULL;
   } else {
-    printf("Connected to device\n");
+    printf("Connected to device!\n");
     return cam;
   }
 }
@@ -163,7 +163,7 @@ void ThermalCam::startCap() {
   cam = connectCam();
 
   std::string path = ros::package::getPath("thermal_camera");
-  std::cout << "found package at " << path << std::endl;
+  std::cout << "Found package at " << path << std::endl;
 
   packname = path + std::string("/config/calibration_5449.xca");
   handle = XC_OpenCamera(dev->url);
