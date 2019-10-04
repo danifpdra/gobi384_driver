@@ -41,6 +41,7 @@ public:
   void stopCap();
 
   XCHANDLE handle = 0;
+  ErrCode errorCode = I_OK;
 
 private:
   // rosnode
@@ -54,7 +55,6 @@ private:
   image_transport::ImageTransport it;
   std_msgs::Header header;
   sensor_msgs::ImagePtr msg_thermal;
-  ErrCode errorCode = I_OK;
   dword frameSize = 0; // The size in bytes of the raw image.
   std::vector<word> framebuffer;
   std::string packname;
@@ -282,7 +282,7 @@ int main(int argc, char **argv) {
   reconstruct.startCap();
 
   ros::Rate rate(50);
-  while (ros::ok()) {
+  while (ros::ok() && reconstruct.errorCode == I_OK) {
     reconstruct.loop_function();
 
     ros::spinOnce();
