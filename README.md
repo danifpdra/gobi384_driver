@@ -1,5 +1,5 @@
 # thermal_camera
-ROS package to work with a thermal csamera Xenics Gobi 384 on Linux
+ROS package to work with a thermal camera Xenics Gobi 384 on Linux
 
 
 # Installation of Camera Drivers on Linux
