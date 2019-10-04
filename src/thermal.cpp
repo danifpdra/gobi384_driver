@@ -23,7 +23,6 @@
 #include "XCamera.h"
 #include "XFilters.h"
 
-
 using namespace std;
 using namespace cv;
 
@@ -224,46 +223,33 @@ void ThermalCam::getImage() {
       int h = XC_GetHeight(handle);
       int w = XC_GetWidth(handle);
 
-      cv::Mat Blue, Red;
-      Blue = cv::Mat::zeros(h,w, CV_16UC1);
-      Red = cv::Mat(h, w, CV_16UC1, CvScalar(255));
-
-      // color_img = cv::Mat(h, w, CV_16UC1, CvScalar(255));
-
       thermal_img =
           cv::Mat(h, w, CV_16UC1, framebuffer.data()); /*convert to OpenCV*/
 
-      // std::vector<Mat> channels;
-      // channels.push_back(Red);
-      // channels.push_back(thermal_img);
-      // channels.push_back(Blue);
-
-      // cv::merge(channels, color_img);
-
-      // color_img.convertTo(color_img, CV_8UC3);
-
       cv::Mat color_img;
 
-      thermal_img /= 256;
+      thermal_img /= 256; // convert pixel values to 8bit
 
-      thermal_img.convertTo(thermal_img, CV_8U);
+      thermal_img.convertTo(thermal_img, CV_8U); // convert image to 8bit
 
-      // color_img /= std::numeric_limits<word>::max();
-
+      /*add colormap to image to visualize information in rgb. Colormaps
+        available:
+        COLORMAP_AUTUMN
+        COLORMAP_BONE
+        COLORMAP_COOL
+        COLORMAP_HOT
+        COLORMAP_HSV
+        COLORMAP_JET
+        COLORMAP_OCEAN
+        COLORMAP_PINK
+        COLORMAP_RAINBOW
+        COLORMAP_SPRING
+        COLORMAP_SUMMER
+        COLORMAP_WINTER*/
       cv::applyColorMap(thermal_img, color_img, cv::COLORMAP_AUTUMN);
-      // std::cout << color_img << std::endl;
-
-
-      // color_img = cv::Mat(h, w, CV_16UC3, framebuffer.data());
-
-      // std::cout << thermal_img << std::endl;
-
-      // cv::cvtColor(thermal_img, color_img, CV_GRAY2RGB);
 
       msg_thermal = cv_bridge::CvImage{header, "bgr8", color_img}
                         .toImageMsg(); /*convert to ROS msg*/
-
-                      // imshow("Display window", color_img);
     }
   }
 }
