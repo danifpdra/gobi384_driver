@@ -23,7 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 find_package(OpenCV REQUIRED)
 find_package(cmake_modules)
-find_package(Eigen REQUIRED)
+#find_package(Eigen REQUIRED)
 
 
 ## System dependencies are found with CMake's conventions
@@ -121,7 +121,7 @@ catkin_package(
   INCLUDE_DIRS include
   #LIBRARIES negative_obstacles
   # CATKIN_DEPENDS roscpp rospy std_msgs
-  DEPENDS Eigen
+  #DEPENDS Eigen
 )
 
 ###########
@@ -132,7 +132,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${Eigen_INCLUDE_DIRS}
+  #${Eigen_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   include
   /usr/share/xeneth/Include/
@@ -168,7 +168,7 @@ add_executable(thermal_camera src/thermal.cpp)
 ## Specify libraries to link a library or executable target against
  target_link_libraries(thermal_camera
    ${catkin_LIBRARIES}
-   ${Eigen_LIBRARIES}
+   #${Eigen_LIBRARIES}
    ${OpenCV_LIBS}
    -lxeneth
 )
