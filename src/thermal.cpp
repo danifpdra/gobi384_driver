@@ -177,28 +177,28 @@ void ThermalCam::startCap() {
   errorCode =
       XC_LoadCalibration(handle, packname.c_str(), XLC_StartSoftwareCorrection);
   if (I_OK == errorCode) {
-    fltThermography = XC_FLT_Queue(handle, "Thermography", "celsius");
-    histoFlt = XC_FLT_Queue(handle, "AutoGain", "");
+    // fltThermography = XC_FLT_Queue(handle, "Thermography", "celsius");
+    // histoFlt = XC_FLT_Queue(handle, "AutoGain", "");
 
-    if (fltThermography > 0) {
-      // Build the look-up table and ..
-      dword mv = XC_GetMaxValue(handle);
-      tempLUT = new double[mv + 1];
+    // if (fltThermography > 0) {
+    //   // Build the look-up table and ..
+    //   dword mv = XC_GetMaxValue(handle);
+    //   tempLUT = new double[mv + 1];
 
-      for (dword x = 0; x < mv + 1; x++) {
-        XC_FLT_ADUToTemperature(handle, fltThermography, x, &tempLUT[x]);
-      }
+    //   for (dword x = 0; x < mv + 1; x++) {
+    //     XC_FLT_ADUToTemperature(handle, fltThermography, x, &tempLUT[x]);
+    //   }
 
-      // std::cout << tempLUT << std::endl;
-      printf("Start capturing.\n");
-      errorCode = XC_StartCapture(handle);
+    // std::cout << tempLUT << std::endl;
+    printf("Start capturing.\n");
+    errorCode = XC_StartCapture(handle);
 
-      if (errorCode != I_OK) {
-        printf("Could not start capturing, errorCode: %lu\n", errorCode);
-      } else {
-        printf("Initialization completed!\n");
-      }
+    if (errorCode != I_OK) {
+      printf("Could not start capturing, errorCode: %lu\n", errorCode);
+    } else {
+      printf("Initialization completed!\n");
     }
+    // }
   }
 }
 
