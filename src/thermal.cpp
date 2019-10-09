@@ -51,7 +51,7 @@ private:
   XCamera *cam;
   XDeviceInformation *devices, *dev;
   cv::Mat thermal_img, color_img;
-  ros::Publisher img_pub_mono, img_pub_color;
+  image_transport::Publisher img_pub_mono, img_pub_color;
   image_transport::ImageTransport it;
   std_msgs::Header header;
   sensor_msgs::ImagePtr msg_thermal_color, msg_thermal_mono;
@@ -73,8 +73,10 @@ private:
  *
  */
 ThermalCam::ThermalCam() : it(nh) {
-  img_pub_mono = nh.advertise<sensor_msgs::Image>("thermal_img_mono", 10);
-  img_pub_color = nh.advertise<sensor_msgs::Image>("thermal_img_color", 10);
+  img_pub_mono = it.advertise("thermal_camera/thermal_img_mono", 1);
+  img_pub_color = it.advertise("thermal_camera/thermal_img_color", 1);
+
+  // image_transport::Publisher pub = it.advertise("camera/image", 1);
 }
 
 /**
