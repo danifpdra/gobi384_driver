@@ -1,4 +1,4 @@
-// ros package to communicate with thermal camera
+// ros package to communicate with thermal camera : 169.254.104.30
 
 #include <ros/console.h>
 #include <ros/ros.h>
@@ -59,7 +59,8 @@ private:
   std::vector<word> framebuffer;
   std::string packname;
   FilterID fltThermography = 0; // Handle to the thermography filter.
-  double *tempLUT = 0;          // Temperature lookup table (ADU to temperature)
+  std::vector<double> tempLUT;  // Temperature lookup table (ADU to temperature)
+  double *tempLUT_debug;
   const char *newint = "64";
   FilterID histoFlt = 0;
 
@@ -75,8 +76,6 @@ private:
 ThermalCam::ThermalCam() : it(nh) {
   img_pub_mono = it.advertise("thermal_camera/thermal_img_mono", 1);
   img_pub_color = it.advertise("thermal_camera/thermal_img_color", 1);
-
-  // image_transport::Publisher pub = it.advertise("camera/image", 1);
 }
 
 /**
@@ -181,19 +180,8 @@ void ThermalCam::startCap() {
   errorCode =
       XC_LoadCalibration(handle, packname.c_str(), XLC_StartSoftwareCorrection);
   if (I_OK == errorCode) {
-    // fltThermography = XC_FLT_Queue(handle, "Thermography", "celsius");
-    // histoFlt = XC_FLT_Queue(handle, "AutoGain", "");
 
-    // if (fltThermography > 0) {
-    //   // Build the look-up table and ..
-    //   dword mv = XC_GetMaxValue(handle);
-    //   tempLUT = new double[mv + 1];
-
-    //   for (dword x = 0; x < mv + 1; x++) {
-    //     XC_FLT_ADUToTemperature(handle, fltThermography, x, &tempLUT[x]);
-    //   }
-
-    // std::cout << tempLUT << std::endl;
+    //   // std::cout << tempLUT << std::endl;
     printf("Start capturing.\n");
     errorCode = XC_StartCapture(handle);
 
@@ -217,6 +205,34 @@ void ThermalCam::getImage() {
     // ... start capturing
     if (XC_IsCapturing(handle)) // When the camera is capturing ...
     {
+      // std::cout << "debugging 1" << std::endl;
+      fltThermography = XC_FLT_Queue(handle, "Thermography", "celsius");
+      // histoFlt = XC_FLT_Queue(handle, "AutoGain", "");
+      if (fltThermography > 0) {
+
+        // Build the look-up table and ..
+        dword mv = XC_GetMaxValue(handle);
+
+        tempLUT_debug = new double[mv + 1];
+
+        tempLUT.resize(mv + 1);
+
+        for (dword x = 0; x < mv + 1; x++) {
+
+          double *temp;
+          XC_FLT_ADUToTemperature(handle, fltThermography, x,
+                                  &tempLUT_debug[x]);
+          tempLUT[x] = tempLUT_debug[x];
+        }
+
+        for (double n : tempLUT) {
+          std::cout << n << ",";
+        }
+        std::cout << "\n" << std::endl;
+      }
+
+      /***/
+
       // Determine native framesize.
       frameSize = XC_GetFrameSize(handle);
 
@@ -276,7 +292,7 @@ void ThermalCam::stopCap() {
   XC_StopCapture(handle);
   XC_CloseCamera(handle);
 
-  delete[] tempLUT;
+  // delete[] tempLUT;
   delete cam;
 
   std::cout << "Camera closed" << std::endl;
