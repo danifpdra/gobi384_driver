@@ -225,10 +225,10 @@ void ThermalCam::getImage() {
           tempLUT[x] = tempLUT_debug[x];
         }
 
-        for (double n : tempLUT) {
-          std::cout << n << ",";
-        }
-        std::cout << "\n" << std::endl;
+        // for (double n : tempLUT) {
+        //   std::cout << n << ",";
+        // }
+        // std::cout << "\n" << std::endl;
       }
 
       /***/
@@ -255,10 +255,32 @@ void ThermalCam::getImage() {
 
       cv::Mat color_img = cv::Mat(h, w, CV_16UC1, framebuffer.data());
 
-      color_img /= 256; // convert pixel values to 8bit
+      // color_img *= 4;
+      // color_img /= 128; // convert pixel values to 8bit
 
-      color_img.convertTo(color_img, CV_8U); // convert image to 8bit
+      color_img.convertTo(color_img, CV_8UC1,
+                          1 / 256.0); // convert image to 8bit
 
+      equalizeHist(color_img, color_img);
+
+      // color_img.convertTo(color_img, -1, 1.2,
+      //                     0); // increase the contrast by 4
+
+      color_img = cv::Scalar::all(255) - color_img;
+
+      // double inverse_gamma = 1.0 / 0.1;
+
+      // cv::Mat lut_matrix(1, 256, CV_8UC1);
+      // uchar *ptr = lut_matrix.ptr();
+      // for (int i = 0; i < 256; i++) {
+      //   ptr[i] = (int)(pow((double)i / 255.0, inverse_gamma) * 255.0);
+      // }
+
+      // cv::Mat result;
+      // cv::LUT(color_img, lut_matrix, color_img);
+      // color_img.convertTo(color_img, CV_32F);
+      // cv::pow(color_img, 0.9, color_img);
+      // color_img.convertTo(color_img, CV_8U);
       /*add colormap to image to visualize information in rgb. Colormaps
         available:
         COLORMAP_AUTUMN
@@ -273,12 +295,12 @@ void ThermalCam::getImage() {
         COLORMAP_SPRING
         COLORMAP_SUMMER
         COLORMAP_WINTER*/
-      cv::applyColorMap(color_img, color_img, cv::COLORMAP_AUTUMN);
+      // cv::applyColorMap(color_img, color_img, cv::COLORMAP_AUTUMN);
 
       msg_thermal_mono = cv_bridge::CvImage{header, "mono16", thermal_img}
                              .toImageMsg(); /*convert image to ROS msg*/
 
-      msg_thermal_color = cv_bridge::CvImage{header, "bgr8", color_img}
+      msg_thermal_color = cv_bridge::CvImage{header, "mono8", color_img}
                               .toImageMsg(); /*convert image to ROS msg*/
     }
   }
