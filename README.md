@@ -1,4 +1,4 @@
-# thermal_camera
+# gobi284_driver
 ROS package to work with a thermal camera Xenics Gobi 384 on Linux
 
 
