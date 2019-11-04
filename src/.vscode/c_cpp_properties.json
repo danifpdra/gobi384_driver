@@ -1,0 +1,35 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/daniela/catkin_ws/devel/include/**",
+                "/opt/ros/melodic/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/colormap/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/driver_common-indigo-devel/driver_base/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/free_space_detection/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/laser_geometry/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/lidar_segmentation/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/laser/RCPRG_laser_drivers/lms1xx/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/negative_obstacles/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/orientation_module/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/road_reconstruction/include/**",
+                "/home/daniela/catkin_ws/src/thermal_camera/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/driver_common-indigo-devel/timestamp_tools/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/Kml_files/velodyne/velodyne_driver/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/Kml_files/velodyne/velodyne_laserscan/include/**",
+                "/home/daniela/catkin_ws/src/road_detection/Kml_files/velodyne/velodyne_pointcloud/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

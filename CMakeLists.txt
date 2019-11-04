@@ -88,6 +88,13 @@ find_package(cmake_modules)
 #   std_msgs
 # )
 
+generate_dynamic_reconfigure_options(
+  config/Tutorials.cfg
+#   cfg/DynReconf2.cfg
+ )
+
+ 
+
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
@@ -164,6 +171,8 @@ add_executable(thermal_camera src/thermal.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_dependencies(thermal_camera ${PROJECT_NAME}_gencfg)
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(thermal_camera

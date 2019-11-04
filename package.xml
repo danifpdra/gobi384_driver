@@ -33,6 +33,8 @@
   <build_export_depend>sensor_msgs</build_export_depend>
   <build_export_depend>xeneth</build_export_depend>
   <build_export_depend>rospack</build_export_depend>
+  <build_export_depend>dynamic_reconfigure</build_export_depend>
+
 
 
   <exec_depend>roscpp</exec_depend>
