@@ -183,10 +183,10 @@ XCamera *ThermalCam::connectCam() {
 void ThermalCam::startCap() {
   cam = connectCam();
 
-  std::string path = ros::package::getPath("thermal_camera");
-  std::cout << "Found package at " << path << std::endl;
+  // std::string path = ros::package::getPath("thermal_camera");
+  // std::cout << "Found package at " << path << std::endl;
 
-  packname = path + std::string("/config/calibration_5449.xca");
+  // packname = path + std::string("/config/calibration_5449.xca");
   handle = XC_OpenCamera(dev->url);
 
   header.frame_id = "map";
@@ -195,29 +195,22 @@ void ThermalCam::startCap() {
 
   XC_SetPropertyValue(handle, "IntegrationTime", newint, "");
 
-  errorCode =
-      XC_LoadCalibration(handle, packname.c_str(), XLC_StartSoftwareCorrection);
-  if (I_OK == errorCode) {
+  // errorCode =
+  //     XC_LoadCalibration(handle, packname.c_str(),
+  //     XLC_StartSoftwareCorrection);
+  printf("Start capturing.\n");
+  errorCode = XC_StartCapture(handle);
 
-    //   // std::cout << tempLUT << std::endl;
-    printf("Start capturing.\n");
-    errorCode = XC_StartCapture(handle);
-
-    if (errorCode != I_OK) {
-      printf("Could not start capturing, errorCode: %lu\n", errorCode);
-    } else {
-      printf("Initialization completed!\n");
-    }
+  if (errorCode != I_OK) {
+    printf("Could not start capturing, errorCode: %lu\n", errorCode);
+  } else {
+    printf("Initialization completed!\n");
   }
-  // camera_matrix = Mat_<float>::eye(3, 3);
-  // distortion_coef = Mat_<float>::eye(1, 5);
 
+  /*Reading parameters from intrisic calibartion for image correction */
   std::string calibration_file = path + std::string("/config/ost.yaml");
   std::cout << calibration_file << std::endl;
   FileStorage fs(calibration_file, FileStorage::READ);
-  std::cout << "error here" << std::endl;
-  std::cout << fs.isOpened() << std::endl;
-  // fs.open(calibration_file, FileStorage::READ);
   fs["camera_matrix"] >> camera_matrix;
   fs["distortion_coefficients"] >> distortion_coef;
   fs.release();
@@ -234,117 +227,112 @@ void ThermalCam::getImage() {
 
   // When the connection is initialised, ...
   if (XC_IsInitialised(handle)) {
-    // ... start capturing
-    // if (XC_IsCapturing(handle)) // When the camera is capturing ...
-    {
-      // std::cout << "debugging 1" << std::endl;
-      // fltThermography = XC_FLT_Queue(handle, "Thermography", "celsius");
-      // // histoFlt = XC_FLT_Queue(handle, "AutoGain", "");
-      // if (fltThermography > 0) {
+    // fltThermography = XC_FLT_Queue(handle, "Thermography", "celsius");
+    // // histoFlt = XC_FLT_Queue(handle, "AutoGain", "");
+    // if (fltThermography > 0) {
 
-      //   // Build the look-up table and ..
-      //   dword mv = XC_GetMaxValue(handle);
+    //   // Build the look-up table and ..
+    //   dword mv = XC_GetMaxValue(handle);
 
-      //   tempLUT_debug = new double[mv + 1];
+    //   tempLUT_debug = new double[mv + 1];
 
-      //   tempLUT.resize(mv + 1);
+    //   tempLUT.resize(mv + 1);
 
-      //   for (dword x = 0; x < mv + 1; x++) {
+    //   for (dword x = 0; x < mv + 1; x++) {
 
-      //     double *temp;
-      //     XC_FLT_ADUToTemperature(handle, fltThermography, x,
-      //                             &tempLUT_debug[x]);
-      //     tempLUT[x] = tempLUT_debug[x];
-      //   }
+    //     double *temp;
+    //     XC_FLT_ADUToTemperature(handle, fltThermography, x,
+    //                             &tempLUT_debug[x]);
+    //     tempLUT[x] = tempLUT_debug[x];
+    //   }
 
-      // for (double n : tempLUT) {
-      //   std::cout << n << ",";
-      // }
-      // std::cout << "\n" << std::endl;
-      // }
+    // for (double n : tempLUT) {
+    //   std::cout << n << ",";
+    // }
+    // std::cout << "\n" << std::endl;
+    // }
 
-      /***/
+    /***/
 
-      // Determine native framesize.
-      frameSize = XC_GetFrameSize(handle);
+    // Determine native framesize.
+    frameSize = XC_GetFrameSize(handle);
 
-      // Initialize the 16-bit buffer.
-      framebuffer.resize(frameSize / 2);
+    // Initialize the 16-bit buffer.
+    framebuffer.resize(frameSize / 2);
 
-      // ... grab a frame from the camera.
-      // printf("Grabbing a frame.\n");
-      errorCode = XC_GetFrame(handle, FT_16_BPP_GRAY, XGF_Blocking,
-                              framebuffer.data(), frameSize);
-      if (errorCode != I_OK) {
-        printf("Problem while fetching frame, errorCode %lu", errorCode);
-      }
-
-      int h = XC_GetHeight(handle);
-      int w = XC_GetWidth(handle);
-
-      thermal_img =
-          cv::Mat(h, w, CV_16UC1, framebuffer.data()); /*convert to OpenCV*/
-
-      cv::Mat color_img = cv::Mat(h, w, CV_16UC1, framebuffer.data());
-
-      color_img.convertTo(color_img, CV_8UC1,
-                          1 / 256.0); // convert image to 8bit
-
-      equalizeHist(color_img, color_img);
-
-      // color_img.convertTo(color_img, -1, 1.2,
-      //                     0); // increase the contrast by 4
-
-      color_img = cv::Scalar::all(255) - color_img;
-      thermal_img = cv::Scalar::all(256 * 256) - thermal_img;
-      // cv::threshold(color_img, color_img, 0, 255,
-      //               cv::THRESH_BINARY + cv::THRESH_OTSU);
-
-      cv::threshold(color_img, color_img, block, 255, cv::THRESH_BINARY);
-
-      // cv::adaptiveThreshold(color_img, color_img, 255,
-      //                       cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY,
-      //                       block, C);
-
-      // double inverse_gamma = 1.0 / 0.1;
-
-      // cv::Mat lut_matrix(1, 256, CV_8UC1);
-      // uchar *ptr = lut_matrix.ptr();
-      // for (int i = 0; i < 256; i++) {
-      //   ptr[i] = (int)(pow((double)i / 255.0, inverse_gamma) * 255.0);
-      // }
-
-      // cv::Mat result;
-      // cv::LUT(color_img, lut_matrix, color_img);
-      // color_img.convertTo(color_img, CV_32F);
-      // cv::pow(color_img, 0.9, color_img);
-      // color_img.convertTo(color_img, CV_8U);
-      /*add colormap to image to visualize information in rgb. Colormaps
-        available:
-        COLORMAP_AUTUMN
-        COLORMAP_BONE
-        COLORMAP_COOL
-        COLORMAP_HOT
-        COLORMAP_HSV
-        COLORMAP_JET
-        COLORMAP_OCEAN
-        COLORMAP_PINK
-        COLORMAP_RAINBOW
-        COLORMAP_SPRING
-        COLORMAP_SUMMER
-        COLORMAP_WINTER*/
-      // cv::applyColorMap(color_img, color_img, cv::COLORMAP_AUTUMN);
-      cv::undistort(thermal_img, undistort_img, camera_matrix, distortion_coef);
-
-      msg_undistort = cv_bridge::CvImage{header, "mono16", undistort_img}
-                          .toImageMsg(); /*convert image to ROS msg*/
-
-      msg_thermal_mono = cv_bridge::CvImage{header, "mono16", thermal_img}
-                             .toImageMsg(); /*convert image to ROS msg*/
-
-      msg_thermal_color = cv_bridge::CvImage{header, "mono8", color_img}
-                              .toImageMsg(); /*convert image to ROS msg*/
+    // ... grab a frame from the camera.
+    // printf("Grabbing a frame.\n");
+    errorCode = XC_GetFrame(handle, FT_16_BPP_GRAY, XGF_Blocking,
+                            framebuffer.data(), frameSize);
+    if (errorCode != I_OK) {
+      printf("Problem while fetching frame, errorCode %lu", errorCode);
     }
+
+    int h = XC_GetHeight(handle);
+    int w = XC_GetWidth(handle);
+
+    thermal_img =
+        cv::Mat(h, w, CV_16UC1, framebuffer.data()); /*convert to OpenCV*/
+
+    cv::Mat color_img = cv::Mat(h, w, CV_16UC1, framebuffer.data());
+
+    color_img.convertTo(color_img, CV_8UC1,
+                        1 / 256.0); // convert image to 8bit
+
+    equalizeHist(color_img, color_img);
+
+    // color_img.convertTo(color_img, -1, 1.2,
+    //                     0); // increase the contrast by 4
+
+    color_img = cv::Scalar::all(255) - color_img;
+    thermal_img = cv::Scalar::all(256 * 256) - thermal_img;
+    // cv::threshold(color_img, color_img, 0, 255,
+    //               cv::THRESH_BINARY + cv::THRESH_OTSU);
+
+    cv::threshold(color_img, color_img, block, 255, cv::THRESH_BINARY);
+
+    // cv::adaptiveThreshold(color_img, color_img, 255,
+    //                       cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY,
+    //                       block, C);
+
+    // double inverse_gamma = 1.0 / 0.1;
+
+    // cv::Mat lut_matrix(1, 256, CV_8UC1);
+    // uchar *ptr = lut_matrix.ptr();
+    // for (int i = 0; i < 256; i++) {
+    //   ptr[i] = (int)(pow((double)i / 255.0, inverse_gamma) * 255.0);
+    // }
+
+    // cv::Mat result;
+    // cv::LUT(color_img, lut_matrix, color_img);
+    // color_img.convertTo(color_img, CV_32F);
+    // cv::pow(color_img, 0.9, color_img);
+    // color_img.convertTo(color_img, CV_8U);
+    /*add colormap to image to visualize information in rgb. Colormaps
+      available:
+      COLORMAP_AUTUMN
+      COLORMAP_BONE
+      COLORMAP_COOL
+      COLORMAP_HOT
+      COLORMAP_HSV
+      COLORMAP_JET
+      COLORMAP_OCEAN
+      COLORMAP_PINK
+      COLORMAP_RAINBOW
+      COLORMAP_SPRING
+      COLORMAP_SUMMER
+      COLORMAP_WINTER*/
+    // cv::applyColorMap(color_img, color_img, cv::COLORMAP_AUTUMN);
+    cv::undistort(thermal_img, undistort_img, camera_matrix, distortion_coef);
+
+    msg_undistort = cv_bridge::CvImage{header, "mono16", undistort_img}
+                        .toImageMsg(); /*convert image to ROS msg*/
+
+    msg_thermal_mono = cv_bridge::CvImage{header, "mono16", thermal_img}
+                           .toImageMsg(); /*convert image to ROS msg*/
+
+    msg_thermal_color = cv_bridge::CvImage{header, "mono8", color_img}
+                            .toImageMsg(); /*convert image to ROS msg*/
   }
 }
 
