@@ -54,11 +54,14 @@ private:
   XCamera *cam;
   XDeviceInformation *devices, *dev;
 
-  cv::Mat thermal_img, color_img, undistort_img, camera_matrix, distortion_coef;
-  image_transport::Publisher img_pub_mono, img_pub_color, img_pub_undistort;
+  cv::Mat thermal_img, thermal_img_inv, color_img, undistort_img, camera_matrix,
+      distortion_coef;
+  image_transport::Publisher img_pub_mono, img_pub_color, img_pub_undistort,
+      img_pub_inv;
   image_transport::ImageTransport it;
   std_msgs::Header header;
-  sensor_msgs::ImagePtr msg_thermal_color, msg_thermal_mono, msg_undistort;
+  sensor_msgs::ImagePtr msg_thermal_color, msg_thermal_mono, msg_undistort,
+      msg_inv;
   dword frameSize = 0; // The size in bytes of the raw image.
   std::vector<word> framebuffer;
   std::string packname, calibration_file;
@@ -88,6 +91,7 @@ void callback(thermal_camera::TutorialsConfig &config, uint32_t level) {
  */
 ThermalCam::ThermalCam() : it(nh) {
   img_pub_mono = it.advertise("thermal_camera/thermal_img_mono", 1);
+  img_pub_inv = it.advertise("thermal_camera/thermal_img_inv", 1);
   img_pub_color = it.advertise("thermal_camera/thermal_img_color", 1);
   img_pub_undistort = it.advertise("thermal_camera/undistorted_img", 1);
 }
@@ -100,6 +104,7 @@ void ThermalCam::loop_function() {
 
   getImage();
   img_pub_mono.publish(msg_thermal_mono);
+  img_pub_inv.publish(msg_inv);
   img_pub_color.publish(msg_thermal_color);
   img_pub_undistort.publish(msg_undistort);
   f = boost::bind(&callback, _1, _2);
@@ -183,8 +188,8 @@ XCamera *ThermalCam::connectCam() {
 void ThermalCam::startCap() {
   cam = connectCam();
 
-  // std::string path = ros::package::getPath("thermal_camera");
-  // std::cout << "Found package at " << path << std::endl;
+  std::string path = ros::package::getPath("thermal_camera");
+  std::cout << "Found package at " << path << std::endl;
 
   // packname = path + std::string("/config/calibration_5449.xca");
   handle = XC_OpenCamera(dev->url);
@@ -279,29 +284,14 @@ void ThermalCam::getImage() {
     color_img.convertTo(color_img, CV_8UC1,
                         1 / 256.0); // convert image to 8bit
 
-    equalizeHist(color_img, color_img);
+    // equalizeHist(color_img, color_img);
 
-    // color_img.convertTo(color_img, -1, 1.2,
-    //                     0); // increase the contrast by 4
-
-    color_img = cv::Scalar::all(255) - color_img;
-    thermal_img = cv::Scalar::all(256 * 256) - thermal_img;
+    // color_img = cv::Scalar::all(255) - color_img;
+    thermal_img_inv = cv::Scalar::all(256 * 256) - thermal_img;
     // cv::threshold(color_img, color_img, 0, 255,
     //               cv::THRESH_BINARY + cv::THRESH_OTSU);
 
-    cv::threshold(color_img, color_img, block, 255, cv::THRESH_BINARY);
-
-    // cv::adaptiveThreshold(color_img, color_img, 255,
-    //                       cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY,
-    //                       block, C);
-
-    // double inverse_gamma = 1.0 / 0.1;
-
-    // cv::Mat lut_matrix(1, 256, CV_8UC1);
-    // uchar *ptr = lut_matrix.ptr();
-    // for (int i = 0; i < 256; i++) {
-    //   ptr[i] = (int)(pow((double)i / 255.0, inverse_gamma) * 255.0);
-    // }
+    // cv::threshold(color_img, color_img, block, 255, cv::THRESH_BINARY);
 
     // cv::Mat result;
     // cv::LUT(color_img, lut_matrix, color_img);
@@ -330,6 +320,9 @@ void ThermalCam::getImage() {
 
     msg_thermal_mono = cv_bridge::CvImage{header, "mono16", thermal_img}
                            .toImageMsg(); /*convert image to ROS msg*/
+
+    msg_inv = cv_bridge::CvImage{header, "mono16", thermal_img_inv}
+                  .toImageMsg(); /*convert image to ROS msg*/
 
     msg_thermal_color = cv_bridge::CvImage{header, "mono8", color_img}
                             .toImageMsg(); /*convert image to ROS msg*/
