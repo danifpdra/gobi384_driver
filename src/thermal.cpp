@@ -233,7 +233,7 @@ void ThermalCam::getImage() {
   // When the connection is initialised, ...
   if (XC_IsInitialised(handle)) {
     // fltThermography = XC_FLT_Queue(handle, "Thermography", "celsius");
-    // // histoFlt = XC_FLT_Queue(handle, "AutoGain", "");
+    // histoFlt = XC_FLT_Queue(handle, "AutoGain", "");
     // if (fltThermography > 0) {
 
     //   // Build the look-up table and ..
@@ -297,7 +297,7 @@ void ThermalCam::getImage() {
     // cv::LUT(color_img, lut_matrix, color_img);
     // color_img.convertTo(color_img, CV_32F);
     // cv::pow(color_img, 0.9, color_img);
-    // color_img.convertTo(color_img, CV_8U);
+    color_img.convertTo(color_img, CV_8U);
     /*add colormap to image to visualize information in rgb. Colormaps
       available:
       COLORMAP_AUTUMN
@@ -312,7 +312,7 @@ void ThermalCam::getImage() {
       COLORMAP_SPRING
       COLORMAP_SUMMER
       COLORMAP_WINTER*/
-    // cv::applyColorMap(color_img, color_img, cv::COLORMAP_AUTUMN);
+    cv::applyColorMap(color_img, color_img, cv::COLORMAP_AUTUMN);
     cv::undistort(thermal_img, undistort_img, camera_matrix, distortion_coef);
 
     msg_undistort = cv_bridge::CvImage{header, "mono16", undistort_img}
@@ -324,7 +324,7 @@ void ThermalCam::getImage() {
     msg_inv = cv_bridge::CvImage{header, "mono16", thermal_img_inv}
                   .toImageMsg(); /*convert image to ROS msg*/
 
-    msg_thermal_color = cv_bridge::CvImage{header, "mono8", color_img}
+    msg_thermal_color = cv_bridge::CvImage{header, "bgr8", color_img}
                             .toImageMsg(); /*convert image to ROS msg*/
   }
 }
