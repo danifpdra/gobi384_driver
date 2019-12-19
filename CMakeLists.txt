@@ -182,6 +182,19 @@ add_dependencies(thermal_camera ${PROJECT_NAME}_gencfg)
    -lxeneth
 )
 
+add_executable(thermal_calibration src/opencv_img.cpp)
+target_link_libraries(thermal_calibration
+  ${catkin_LIBRARIES}
+  ${Eigen3_LIBRARIES}
+  ${OpenCV_LIBS}
+  ${GTK_LIBRARIES}
+  ${GTK2_LIBRARIES}
+  #  ${PCL_LIBRARIES}
+  #  ${PCL_COMMON_LIBRARIES}
+  #  ${PCL_IO_LIBRARIES}
+)
+
+
 
 #############
 ## Install ##
