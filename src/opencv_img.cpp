@@ -1,3 +1,4 @@
+#include "std_msgs/Float32MultiArray.h"
 #include <ros/console.h>
 #include <ros/ros.h>
 #include <rospack/rospack.h>
@@ -25,6 +26,9 @@
 
 using namespace std;
 using namespace cv;
+int n_count = 0;
+float temp1, temp2, temp3;
+int x_1, y_1, x_2, y_2, x_3, y_3;
 
 // class ImgCalib {
 // public:
@@ -72,6 +76,17 @@ void CallBackFunc(int event, int x, int y, int flags, void *userdata) {
   if (event == EVENT_LBUTTONDOWN) {
     cout << "Left button of the mouse is clicked - position (" << x << ", " << y
          << ")" << endl;
+    n_count += 1;
+    if (n_count == 1) {
+      x_1 = x;
+      y_1 = y;
+    } else if (n_count == 2) {
+      x_2 = x;
+      y_2 = y;
+    } else if (n_count == 3) {
+      x_3 = x;
+      y_3 = y;
+    }
   } else if (event == EVENT_RBUTTONDOWN) {
     cout << "Right button of the mouse is clicked - position (" << x << ", "
          << y << ")" << endl;
@@ -84,6 +99,14 @@ void CallBackFunc(int event, int x, int y, int flags, void *userdata) {
   }
 }
 
+void TempCallback(std_msgs::Float32MultiArray temp_msg) {
+  temp1 = temp_msg.data[0];
+  temp2 = temp_msg.data[1];
+  temp3 = temp_msg.data[2];
+  cout << "Temp1: " << temp1 << "Temp2: " << temp2 << "Temp3: " << temp3
+       << std::endl;
+}
+
 int main(int argc, char **argv) {
 
   ros::init(argc, argv, "thermal_img_calibration");
@@ -93,6 +116,7 @@ int main(int argc, char **argv) {
   image_transport::ImageTransport it(nh);
   image_transport::Subscriber img_sub =
       it.subscribe("/thermal_camera/thermal_img_mono", 1, imageCallback);
+  ros::Subscriber sub_temp = nh.subscribe("Temp_sensors", 1000, TempCallback);
   setMouseCallback("Frame", CallBackFunc, NULL);
   ros::spin();
   cv::destroyWindow("Frame");
