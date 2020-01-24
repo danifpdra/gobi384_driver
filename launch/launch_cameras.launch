@@ -1,0 +1,9 @@
+<launch>
+    <include file="$(find thermal_camera)/launch/thermal_camera.launch">
+    </include>
+
+    <include file="$(find pointgrey_camera_driver)/launch/camera.launch">
+        <param name="framerate" value="15" />
+    </include>
+
+</launch>

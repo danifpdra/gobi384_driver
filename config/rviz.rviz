@@ -56,7 +56,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /thermal_camera/thermal_img_color
+      Image Topic: /camera/image_mono
       Max Value: 1
       Median window: 5
       Min Value: 0

@@ -103,8 +103,7 @@ void TempCallback(std_msgs::Float32MultiArray temp_msg) {
   temp1 = temp_msg.data[0];
   temp2 = temp_msg.data[1];
   temp3 = temp_msg.data[2];
-  cout << "Temp1: " << temp1 << "Temp2: " << temp2 << "Temp3: " << temp3
-       << std::endl;
+  cout << "T1= " << temp1 << " T2= " << temp2 << " T3= " << temp3 << std::endl;
 }
 
 int main(int argc, char **argv) {

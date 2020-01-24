@@ -290,7 +290,8 @@ void ThermalCam::getImage() {
     thermal_img_inv = cv::Scalar::all(256 * 256) - thermal_img;
     // cv::threshold(color_img, color_img, 0, 255,
     //               cv::THRESH_BINARY + cv::THRESH_OTSU);
-
+    // thermal_img_inv.convertTo(thermal_img_inv, CV_8UC1, 1 / 256.0);
+    // equalizeHist(thermal_img_inv, thermal_img_inv);
     // cv::threshold(color_img, color_img, block, 255, cv::THRESH_BINARY);
 
     // cv::Mat result;
@@ -349,7 +350,7 @@ int main(int argc, char **argv) {
 
   reconstruct.startCap();
 
-  ros::Rate rate(50);
+  ros::Rate rate(12);
   while (ros::ok() && reconstruct.errorCode == I_OK) {
     reconstruct.loop_function();
 
